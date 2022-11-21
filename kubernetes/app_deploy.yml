@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voteapp
+  labels:
+    app: voteapplb
+spec:
+  selector:
+    matchLabels:
+      app: voteapplb
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: voteapplb
+    spec:
+      containers:
+      - name: voteapp
+        image: whujin11e/public:azure_voting_app
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        env:
+        - name: TITLE
+          value: "La pêche c'est bien?"
+        - name: VOTE1VALUE
+          value: "Oui"
+        - name: VOTE2VALUE
+          value: "Non"
+        - name: REDIS
+          value: "clustredis"
+        - name: STRESS_SECS
+          value: "25"
+        - name: REDIS_PWD
+          valueFrom:
+            secretKeyRef:
+              name: redispw
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loadvoteapp
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: voteapplb
